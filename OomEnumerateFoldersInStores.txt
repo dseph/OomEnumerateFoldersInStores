@@ -1,0 +1,150 @@
+Sub TestEnumeration()
+
+    EnumerateFoldersInStores (2)
+    
+End Sub
+
+
+'--------------------------------------------------------------------------------------------------------------------
+' Sub EnumerateFoldersInStores()
+' Parameters:
+'     MaxLevels - Set to how many levels of folders you wish to process. 1 for the first level. 0 for no processing
+' This lists the stores under the current profile and will display the folders.
+'--------------------------------------------------------------------------------------------------------------------
+Sub EnumerateFoldersInStores(ByVal MaxLevels As Integer)
+
+' For reference:
+'   https://learn.microsoft.com/en-us/dotnet/api/microsoft.office.interop.outlook.olexchangestoretype?view=outlook-pia
+'   public enum OlExchangeStoreType
+'       olPrimaryExchangeMailbox    0   Specifies a primary Exchange mailbox store.
+'       olExchangeMailbox           1   Specifies an Exchange delegate mailbox store.
+'       olExchangePublicFolder      2   Specifies an Exchange Public Folder store
+'       olNotExchange               3   Specifies that the store is not an Exchange store. This could be a PST, Sharepoint Lists, etc
+'       olAdditionalExchangeMailbox 4   Specifies an additional Exchange mailbox store.
+ 
+ Dim colStores As Outlook.Stores
+ Dim oStore As Outlook.Store
+ Dim oRoot As Outlook.Folder
+ Dim sProcessing As String
+ 
+ 'On Error Resume Next
+ On Error GoTo ErrorHandler
+ 
+ Set colStores = Application.Session.Stores
+ 
+ For Each oStore In colStores
+ 
+    Set oRoot = oStore.GetRootFolder
+    
+    Processing = "oStore.DisplayName"
+    Debug.Print ("oStore.DisplayName: " + oStore.DisplayName)
+    
+    
+    sProcessing = "oRoot.FolderPath"
+    If IsNull(oRoot.FolderPath) Then
+         
+        Debug.Print ("FolderPath: <Is Null>")
+    Else
+         Debug.Print ("FolderPath: " + oRoot.FolderPath)
+    End If
+    
+    Processing = "oStore.Class"
+    Debug.Print ("oStore.Class: " + CStr(oStore.Class))
+    
+    Processing = "oStore.IsDataFileStore"
+    Debug.Print ("oStore.IsDataFileStore: " + CStr(oStore.IsDataFileStore))
+
+    sProcessing = "oStore.ExchangeStoreType"
+    Debug.Print ("oStore.ExchangeStoreType: " + CStr(oStore.ExchangeStoreType))
+    
+    sProcessing = "oStore.FilePath"
+    Debug.Print ("oStore.FilePath: " + oStore.FilePath)
+    
+     Processing = "oStore.IsCachedExchange"
+    Debug.Print ("oStore.IsCachedExchange: " + CStr(oStore.IsCachedExchange))
+ 
+ 
+    If (MaxLevels > 0) Then
+        Debug.Print "Subfolders:"
+        EnumerateFolders oRoot, MaxLevels
+    End If
+     
+    Debug.Print ("")
+    Debug.Print ("---")
+    Debug.Print ("")
+    
+ Next
+ 
+    Debug.Print ("")
+    Debug.Print ("Finished Enumeration")
+    Debug.Print ("")
+ 
+ Exit Sub
+
+ErrorHandler:
+    Debug.Print ("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * ")
+    Debug.Print ("* * * Error - EnumerateFoldersInStores - Start")
+    Debug.Print ("Error was while getting the value for " + sProcessing)
+    Debug.Print ("Number: " + CStr(Err.Number))
+    Debug.Print ("Description: " + Err.Description)
+    Debug.Print ("* * * Error - EnumerateFoldersInStores - End")
+    Debug.Print ("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * ")
+    Resume Next
+End Sub
+
+
+'--------------------------------------------------------------------------------------------------------------------
+' EnumerateFolders ()
+' Parameters:
+'     oFolder - Pass the folder object for the starting folder to process
+'     MaxLevels - Set to how many levels of folders you wish to process. 1 for the first level. 0 for no processing
+'--------------------------------------------------------------------------------------------------------------------
+Private Sub EnumerateFolders(ByVal oFolder As Outlook.Folder, ByVal MaxLevels As Integer)
+ 
+Dim folders As Outlook.folders
+Dim Folder As Outlook.Folder
+Dim foldercount As Integer
+Dim sProcessing As String
+Static iLevelCount As Integer
+
+If iLevelCount = Empty Then
+    iLevelCount = 0
+End If
+ 
+ 
+If iLevelCount >= MaxLevels Then
+    iLevelCount = 0
+    Exit Sub
+End If
+
+
+
+ iLevelCount = iLevelCount + 1
+  
+' On Error Resume Next
+ On Error GoTo ErrorHandler
+ 
+ Set folders = oFolder.folders
+ foldercount = folders.Count
+ 
+ 'Check if there are any folders below oFolder
+ If foldercount <> 0 Then
+    For Each Folder In folders
+        sProcessing = Folder.Name
+        Debug.Print "    --> " + (Folder.FolderPath) + "  (Items: " + CStr(oFolder.Items.Count) + ")"
+        EnumerateFolders Folder, (MaxLevels - 1) ' Process child folders
+    Next
+ End If
+ 
+Exit Sub
+
+ErrorHandler:
+    Debug.Print ("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * ")
+    Debug.Print ("* * * Error - EnumerateFolders - Start")
+    Debug.Print ("Error was while getting the value for " + sProcessing)
+    Debug.Print ("Number: " + CStr(Err.Number))
+    Debug.Print ("Description: " + Err.Description)
+    Debug.Print ("* * * Error - EnumerateFolders - End")
+    Debug.Print ("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * ")
+    Resume Next
+End Sub
