@@ -1,0 +1,2 @@
+# OomEnumerateFoldersInStores
+List Outlook Stores
